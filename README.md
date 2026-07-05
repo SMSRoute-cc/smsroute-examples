@@ -98,3 +98,5 @@ twilio alternative no kyc · sms api python · sms api node.js
 ## License
 
 MIT — see [LICENSE](LICENSE). Examples provided as-is; you own compliance for your destination markets.
+
+<!-- selftest -->
