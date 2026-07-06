@@ -7,10 +7,10 @@ Copy-paste code to send SMS programmatically without a phone number, using a **n
 ## Quick Start (cURL)
 
 ```bash
-curl -X POST https://smsroute.cc/api/send \
-  -H "Authorization: Bearer $SMSROUTE_API_KEY" \
+curl -X POST https://api.smsroute.cc/sms/send \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"to":"+15551234567","from":"MyApp","text":"Your code is 123456"}'
+  -d '{"to": "+14155550123", "from": "INFO", "message": "Your code is 482913"}'
 ```
 
 Get your API key at [smsroute.cc](https://smsroute.cc/) — email-only signup, no documents.
@@ -18,45 +18,30 @@ Get your API key at [smsroute.cc](https://smsroute.cc/) — email-only signup, n
 ## Python
 
 ```python
-import os, requests
+import requests
 
-def send_sms(to, text, sender="MyApp"):
-    r = requests.post(
-        "https://smsroute.cc/api/send",
-        headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
-        json={"to": to, "from": sender, "text": text},
-        timeout=15,
-    )
-    r.raise_for_status()
-    return r.json()
-
-# OTP example
-import random
-code = f"{random.randint(0, 999999):06d}"
-send_sms("+15551234567", f"Your verification code is {code}. Expires in 5 minutes.")
+resp = requests.post(
+    "https://api.smsroute.cc/sms/send",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={"to": "+14155550123", "from": "INFO", "message": "Your code is 482913"},
+)
+print(resp.json())  # message ID + status
 ```
 
 Full Python examples (OTP verify flow, delivery webhooks, retries) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
 
 ## Node.js
 
-```js
-const send = async (to, text, from = "MyApp") => {
-  const res = await fetch("https://smsroute.cc/api/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.SMSROUTE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ to, from, text }),
-  });
-  if (!res.ok) throw new Error(`SMSRoute ${res.status}`);
-  return res.json();
-};
-
-// OTP
-const code = String(Math.floor(Math.random() * 1e6)).padStart(6, "0");
-await send("+15551234567", `Your code is ${code}`);
+```javascript
+const res = await fetch('https://api.smsroute.cc/sms/send', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ to: '+14155550123', from: 'INFO', message: 'Your code is 482913' })
+});
+console.log(await res.json()); // message ID + status
 ```
 
 Full Node.js examples (Express OTP endpoint, rate limiting, TypeScript types) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
@@ -65,7 +50,7 @@ Full Node.js examples (Express OTP endpoint, rate limiting, TypeScript types) ar
 
 ```php
 <?php
-$ch = curl_init("https://smsroute.cc/api/send");
+$ch = curl_init("https://api.smsroute.cc/sms/send");
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_HTTPHEADER => [
@@ -73,9 +58,9 @@ curl_setopt_array($ch, [
         "Content-Type: application/json",
     ],
     CURLOPT_POSTFIELDS => json_encode([
-        "to" => "+15551234567",
-        "from" => "MyApp",
-        "text" => "Your code is 123456",
+        "to" => "+14155550123",
+        "from" => "INFO",
+        "message" => "Your code is 482913",
     ]),
     CURLOPT_RETURNTRANSFER => true,
 ]);
@@ -100,11 +85,11 @@ import (
 
 func sendSMS(to, text, sender string) error {
     body, _ := json.Marshal(map[string]string{
-        "to":   to,
-        "from": sender,
-        "text": text,
+        "to":      to,
+        "from":    sender,
+        "message": text,
     })
-    req, _ := http.NewRequest("POST", "https://smsroute.cc/api/send", bytes.NewBuffer(body))
+    req, _ := http.NewRequest("POST", "https://api.smsroute.cc/sms/send", bytes.NewBuffer(body))
     req.Header.Set("Authorization", "Bearer "+os.Getenv("SMSROUTE_API_KEY"))
     req.Header.Set("Content-Type", "application/json")
     _, err := http.DefaultClient.Do(req)
@@ -126,9 +111,9 @@ client.messages.create(to="+15551234567", from_="+15559876543", body="Hello")
 
 # After (SMSRoute)
 import requests
-requests.post("https://smsroute.cc/api/send",
+requests.post("https://api.smsroute.cc/sms/send",
     headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
-    json={"to": "+15551234567", "from": "MyApp", "text": "Hello"})
+    json={"to": "+15551234567", "from": "INFO", "message": "Hello"})
 ```
 
 No account SID, no phone number purchase, no identity verification. See the full [Twilio alternative guide](https://smsroute-cc.github.io/twilio-alternative-no-business-verification.html).
@@ -174,15 +159,4 @@ All examples are available in the [examples repository](https://github.com/SMSRo
 - [No-KYC SMS API guide](https://smsroute-cc.github.io/best-no-kyc-sms-api.html)
 - [Anonymous SMS API for developers](https://smsroute-cc.github.io/anonymous-sms-api-for-developers.html)
 - [Cheapest international bulk SMS API](https://smsroute-cc.github.io/cheapest-international-bulk-sms-api.html)
-- [Pay SMS API with USDT](https://smsroute-cc.github.io/pay-sms-api-with-usdt.html)
-- [Vonage/Plivo alternative no vetting](https://smsroute-cc.github.io/vonage-plivo-alternative-no-vetting.html)
-- [API reference](https://smsroute.cc/api/)
-- [Bulk SMS](https://smsroute.cc/bulk-sms/)
-- [No-KYC SMS](https://smsroute.cc/no-kyc-sms/)
-- [Crypto payments](https://smsroute.cc/crypto-payments/)
-- [SMS pricing data repo](https://github.com/SMSRoute-cc/sms-pricing-data)
-- [Awesome SMS privacy](https://github.com/SMSRoute-cc/awesome-sms-privacy)
-
-## License
-
-MIT — see [LICENSE](LICENSE). Examples provided as-is; you own compliance for your destination markets.
+- [Full API reference](https://smsroute.cc/api/)
