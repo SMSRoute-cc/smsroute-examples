@@ -1,31 +1,19 @@
-# SMSRoute — No-KYC SMS API Examples (Python, Node.js, cURL)
+# SMSRoute — No-KYC SMS API Code Examples
 
-Send SMS and OTP from code with a **no-KYC SMS API** you can pay for in **crypto (BTC, ETH, USDT)**.
-No identity documents, no business vetting, no multi-day approval — fund a balance, grab an API key,
-and send in minutes. This repo has copy-paste examples in **Python**, **Node.js**, and **cURL**.
+Copy-paste code to send SMS programmatically without a phone number, using a **no-KYC SMS API** with **crypto billing**. No identity docs, no business verification, no 10DLC registration. Fund with BTC/ETH/USDT/XMR/LTC/SOL and send in minutes.
 
-> SMSRoute is a no-KYC SMS API with crypto billing. These examples are MIT-licensed and provider-agnostic
-> in shape — swap the base URL and key for any HTTP SMS API.
+**Target queries:** send SMS programmatically without phone number, Twilio alternative code, SMS API no KYC
 
-## Why a no-KYC / crypto SMS API?
-
-- **Instant start** — no KYC vetting queue; send the same session.
-- **Privacy** — minimal data footprint; no corporate-identity dossier handed to a vendor.
-- **Crypto billing** — pay in BTC, ETH, or USDT (stablecoin = no volatility). Great for crypto
-  exchanges, Web3 apps, Telegram bots, and teams without a corporate card.
-- **International OTP/transactional reach** — clean delivery to 190+ countries.
-
-Honest limit: branded **US A2P** requires 10DLC registration by carrier law — a no-KYC route is for
-international, transactional, OTP, and privacy-sensitive sending, not unregistered branded US traffic.
-
-## Quick start (cURL)
+## Quick Start (cURL)
 
 ```bash
-curl -X POST https://api.smsroute.cc/v1/send \
+curl -X POST https://smsroute.cc/api/send \
   -H "Authorization: Bearer $SMSROUTE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"to":"+15551234567","from":"MyApp","text":"Your code is 123456"}'
 ```
+
+Get your API key at [smsroute.cc](https://smsroute.cc/) — email-only signup, no documents.
 
 ## Python
 
@@ -34,7 +22,7 @@ import os, requests
 
 def send_sms(to, text, sender="MyApp"):
     r = requests.post(
-        "https://api.smsroute.cc/v1/send",
+        "https://smsroute.cc/api/send",
         headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
         json={"to": to, "from": sender, "text": text},
         timeout=15,
@@ -48,13 +36,13 @@ code = f"{random.randint(0, 999999):06d}"
 send_sms("+15551234567", f"Your verification code is {code}. Expires in 5 minutes.")
 ```
 
-Full examples in [`python/`](python/) — OTP verify flow, delivery webhooks, retries.
+Full Python examples (OTP verify flow, delivery webhooks, retries) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
 
 ## Node.js
 
 ```js
 const send = async (to, text, from = "MyApp") => {
-  const res = await fetch("https://api.smsroute.cc/v1/send", {
+  const res = await fetch("https://smsroute.cc/api/send", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.SMSROUTE_API_KEY}`,
@@ -71,29 +59,129 @@ const code = String(Math.floor(Math.random() * 1e6)).padStart(6, "0");
 await send("+15551234567", `Your code is ${code}`);
 ```
 
-Full examples in [`node/`](node/) — Express OTP endpoint, rate limiting, TypeScript types.
+Full Node.js examples (Express OTP endpoint, rate limiting, TypeScript types) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
 
-## Common use cases
+## PHP
+
+```php
+<?php
+$ch = curl_init("https://smsroute.cc/api/send");
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer " . getenv("SMSROUTE_API_KEY"),
+        "Content-Type: application/json",
+    ],
+    CURLOPT_POSTFIELDS => json_encode([
+        "to" => "+15551234567",
+        "from" => "MyApp",
+        "text" => "Your code is 123456",
+    ]),
+    CURLOPT_RETURNTRANSFER => true,
+]);
+$response = curl_exec($ch);
+curl_close($ch);
+?>
+```
+
+Full PHP examples (Laravel integration, webhook handler) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
+
+## Go
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+    "os"
+)
+
+func sendSMS(to, text, sender string) error {
+    body, _ := json.Marshal(map[string]string{
+        "to":   to,
+        "from": sender,
+        "text": text,
+    })
+    req, _ := http.NewRequest("POST", "https://smsroute.cc/api/send", bytes.NewBuffer(body))
+    req.Header.Set("Authorization", "Bearer "+os.Getenv("SMSROUTE_API_KEY"))
+    req.Header.Set("Content-Type", "application/json")
+    _, err := http.DefaultClient.Do(req)
+    return err
+}
+```
+
+Full Go examples (concurrent sending, DLR polling) are in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
+
+## Migrate from Twilio in 5 Lines
+
+Replace Twilio with SMSRoute — no KYC, no business verification, no 10DLC:
+
+```python
+# Before (Twilio)
+from twilio.rest import Client
+client = Client(account_sid, auth_token)
+client.messages.create(to="+15551234567", from_="+15559876543", body="Hello")
+
+# After (SMSRoute)
+import requests
+requests.post("https://smsroute.cc/api/send",
+    headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
+    json={"to": "+15551234567", "from": "MyApp", "text": "Hello"})
+```
+
+No account SID, no phone number purchase, no identity verification. See the full [Twilio alternative guide](https://smsroute-cc.github.io/twilio-alternative-no-business-verification.html).
+
+## Why SMSRoute?
+
+| Feature | SMSRoute | Twilio/Vonage/Plivo |
+|---|---|---|
+| KYC required | **No** — email-only signup | Yes — identity + business docs |
+| Billing | Crypto (BTC/ETH/USDT/XMR/LTC/SOL) + auto top-up | Credit card only |
+| 10DLC/DLT registration | Not required | Required for US traffic |
+| Data retention | Minimal | Retains message content |
+| Pricing | From $0.004/message | Varies, often higher |
+| Coverage | 149 countries | Similar, but with restrictions |
+| Failed messages | Auto-credited | Manual dispute |
+| Support | 24/7 Telegram + email | Ticket-based |
+
+## Pricing & Coverage
+
+- **From $0.004/message** (premium corridors up to $0.035)
+- **149 countries** — see full [pricing page](https://smsroute.cc/prices/)
+- **99.9%+ uptime** TTM with real-time DLR webhooks
+- **Free test credits** on signup
+
+## Crypto Payments
+
+Pay with **BTC, ETH, USDT (TRC-20/ERC-20), XMR, LTC, SOL** — automatic top-up confirmation, no volatility risk with stablecoins. See [crypto payments guide](https://smsroute-cc.github.io/sms-api-accepts-bitcoin-crypto.html) and [Monero guide](https://smsroute-cc.github.io/sms-api-monero-xmr.html).
+
+## Common Use Cases
 
 | Use case | Example |
 |---|---|
-| Send an OTP / 2FA code | [python/otp_verify.py](python/otp_verify.py) · [node/otp-endpoint.js](node/otp-endpoint.js) |
-| Telegram bot sends SMS | [node/telegram-bot-sms.js](node/telegram-bot-sms.js) |
-| Crypto exchange verification | [python/exchange_verify.py](python/exchange_verify.py) |
-| Delivery receipt webhook | [python/dlr_webhook.py](python/dlr_webhook.py) |
+| Send OTP / 2FA without KYC | python/otp_verify.py · node/otp-endpoint.js |
+| Crypto exchange verification | python/exchange_verify.py |
+| Telegram bot sends SMS | node/telegram-bot-sms.js |
+| Anonymous SMS for privacy apps | python/anonymous_send.py |
+| Delivery receipt webhook | python/dlr_webhook.py |
 
-## Keywords
+All examples are available in the [examples repository](https://github.com/SMSRoute-cc/smsroute-examples).
 
-no kyc sms api · anonymous sms api · sms api crypto payment · bitcoin sms api · usdt sms api ·
-sms api without registration · send otp without kyc · crypto sms verification · privacy sms api ·
-twilio alternative no kyc · sms api python · sms api node.js
+## Resources
 
-## Docs & guides
-
-- [No-KYC SMS API: complete guide](https://smsroute.cc/blog/no-kyc-sms-api-complete-guide-2026)
-- [Pay for an SMS API with crypto](https://smsroute.cc/blog/pay-for-sms-api-with-crypto-2026)
-- [Send OTP SMS without KYC (5 lines)](https://smsroute.cc/blog/send-otp-sms-without-kyc-2026)
-- [Get an API key](https://smsroute.cc/signup)
+- [No-KYC SMS API guide](https://smsroute-cc.github.io/best-no-kyc-sms-api.html)
+- [Anonymous SMS API for developers](https://smsroute-cc.github.io/anonymous-sms-api-for-developers.html)
+- [Cheapest international bulk SMS API](https://smsroute-cc.github.io/cheapest-international-bulk-sms-api.html)
+- [Pay SMS API with USDT](https://smsroute-cc.github.io/pay-sms-api-with-usdt.html)
+- [Vonage/Plivo alternative no vetting](https://smsroute-cc.github.io/vonage-plivo-alternative-no-vetting.html)
+- [API reference](https://smsroute.cc/api/)
+- [Bulk SMS](https://smsroute.cc/bulk-sms/)
+- [No-KYC SMS](https://smsroute.cc/no-kyc-sms/)
+- [Crypto payments](https://smsroute.cc/crypto-payments/)
+- [SMS pricing data repo](https://github.com/SMSRoute-cc/sms-pricing-data)
+- [Awesome SMS privacy](https://github.com/SMSRoute-cc/awesome-sms-privacy)
 
 ## License
 
