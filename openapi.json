@@ -1,0 +1,1101 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "SMSRoute API",
+  "description": "SMSRoute is a crypto-native SMS gateway delivering to 149 countries from $0.004/SMS. No KYC at signup. Pay with BTC, ETH, USDT, LTC, XMR, or SOL.\n\n## Authentication\nAll endpoints require a Bearer token in the `Authorization` header. Get your API key from the dashboard.\n\n## Rate Limits\n- Default: 100 requests/second per API key\n- Burst: 200 requests in a 1-second window\n- Higher limits available on request\n\n## Base URL\n`https://api.smsroute.cc`",
+  "version": "1.0.0",
+  "contact": {
+   "email": "support@smsroute.cc",
+   "url": "https://smsroute.cc/support"
+  },
+  "x-logo": {
+   "url": "https://smsroute.cc/logo.svg",
+   "altText": "SMSRoute Logo"
+  }
+ },
+ "servers": [
+  {
+   "url": "https://api.smsroute.cc",
+   "description": "Production API"
+  }
+ ],
+ "tags": [
+  {
+   "name": "Auth",
+   "description": "Authentication and account registration"
+  },
+  {
+   "name": "SMS",
+   "description": "Send SMS messages and retrieve delivery status"
+  },
+  {
+   "name": "Account",
+   "description": "Account balance, profile, pricing, and orders"
+  },
+  {
+   "name": "HLR",
+   "description": "Phone number validation via HLR lookup"
+  },
+  {
+   "name": "Notifications",
+   "description": "User notifications"
+  }
+ ],
+ "paths": {
+  "/auth/register": {
+   "post": {
+    "tags": [
+     "Auth"
+    ],
+    "summary": "Register new account",
+    "description": "Create a new SMSRoute account. No KYC required \u2014 sign up with email only.",
+    "operationId": "register",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "email",
+         "password"
+        ],
+        "properties": {
+         "email": {
+          "type": "string",
+          "format": "email"
+         },
+         "password": {
+          "type": "string",
+          "minLength": 8
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Account created"
+     },
+     "400": {
+      "description": "Invalid input"
+     }
+    }
+   }
+  },
+  "/auth/login": {
+   "post": {
+    "tags": [
+     "Auth"
+    ],
+    "summary": "Login",
+    "description": "Authenticate and receive a session token.",
+    "operationId": "login",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "email",
+         "password"
+        ],
+        "properties": {
+         "email": {
+          "type": "string",
+          "format": "email"
+         },
+         "password": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Login successful"
+     },
+     "401": {
+      "description": "Invalid credentials"
+     }
+    }
+   }
+  },
+  "/sms/send": {
+   "post": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Send SMS",
+    "description": "Send a single SMS message to any mobile number worldwide. Supports alphanumeric sender IDs, scheduled delivery, and webhook delivery receipts.",
+    "operationId": "sendSms",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "to",
+         "message"
+        ],
+        "properties": {
+         "to": {
+          "type": "string",
+          "description": "Recipient phone number in E.164 format",
+          "example": "+1234567890"
+         },
+         "message": {
+          "type": "string",
+          "description": "SMS message content (max 1600 chars)",
+          "maxLength": 1600
+         },
+         "from": {
+          "type": "string",
+          "description": "Sender ID (alphanumeric, max 11 chars)",
+          "maxLength": 11
+         },
+         "sender_id": {
+          "type": "string",
+          "description": "Alternative to `from`. Sender ID."
+         },
+         "callback_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Webhook URL for delivery receipts"
+         },
+         "marker": {
+          "type": "string",
+          "description": "Route marker to send via a specific gateway"
+         }
+        }
+       },
+       "example": {
+        "to": "+1234567890",
+        "from": "SMSRoute",
+        "message": "Hello from SMSRoute!",
+        "callback_url": "https://yourapp.com/webhook"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "SMS sent successfully",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "enum": [
+            "success"
+           ]
+          },
+          "messageId": {
+           "type": "string"
+          },
+          "cost": {
+           "type": "number",
+           "format": "float"
+          },
+          "balance": {
+           "type": "number",
+           "format": "float"
+          }
+         }
+        },
+        "example": {
+         "status": "success",
+         "messageId": "sms_01HZX...",
+         "cost": 0.004,
+         "balance": 99.996
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request \u2014 invalid parameters"
+     },
+     "401": {
+      "description": "Unauthorized \u2014 invalid or missing API key"
+     },
+     "402": {
+      "description": "Insufficient balance"
+     },
+     "429": {
+      "description": "Rate limit exceeded"
+     }
+    }
+   }
+  },
+  "/sms/send/bulk": {
+   "post": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Send Bulk SMS",
+    "description": "Send SMS messages to multiple recipients in a single request. Up to 10,000 recipients per batch. Processes in parallel on the server side.",
+    "operationId": "sendBulkSms",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "recipients"
+        ],
+        "properties": {
+         "recipients": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+           "type": "object",
+           "required": [
+            "to"
+           ],
+           "properties": {
+            "to": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            }
+           }
+          }
+         },
+         "from": {
+          "type": "string",
+          "maxLength": 11
+         },
+         "callback_url": {
+          "type": "string",
+          "format": "uri"
+         },
+         "marker": {
+          "type": "string"
+         }
+        }
+       },
+       "example": {
+        "recipients": [
+         {
+          "to": "+1234567890",
+          "message": "Hello User 1!"
+         },
+         {
+          "to": "+0987654321",
+          "message": "Hello User 2!"
+         }
+        ],
+        "from": "SMSRoute",
+        "callback_url": "https://yourapp.com/webhook"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Bulk request accepted",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "batchId": {
+           "type": "string"
+          },
+          "totalMessages": {
+           "type": "integer"
+          },
+          "estimatedCost": {
+           "type": "number"
+          },
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request"
+     },
+     "401": {
+      "description": "Unauthorized"
+     },
+     "429": {
+      "description": "Rate limit exceeded"
+     }
+    }
+   }
+  },
+  "/sms/single/{messageId}/status": {
+   "get": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Get Message Status",
+    "description": "Retrieve delivery status of a specific message by its unique identifier.",
+    "operationId": "getMessageStatus",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "messageId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Message ID returned from send endpoint",
+      "example": "sms_01HZX..."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Message status",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "messageId": {
+           "type": "string"
+          },
+          "status": {
+           "type": "string",
+           "enum": [
+            "queued",
+            "sent",
+            "delivered",
+            "failed",
+            "expired",
+            "rejected"
+           ]
+          },
+          "deliveredAt": {
+           "type": "string",
+           "format": "date-time",
+           "nullable": true
+          },
+          "cost": {
+           "type": "number"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized"
+     },
+     "404": {
+      "description": "Message not found"
+     }
+    }
+   }
+  },
+  "/sms/bulk/{batchId}": {
+   "get": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Get Bulk Batch Status",
+    "description": "Retrieve status of a bulk SMS batch.",
+    "operationId": "getBulkStatus",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "batchId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Batch status"
+     },
+     "401": {
+      "description": "Unauthorized"
+     },
+     "404": {
+      "description": "Batch not found"
+     }
+    }
+   }
+  },
+  "/sms/logs": {
+   "get": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Get SMS Logs",
+    "description": "Retrieve your SMS message history with pagination and filtering.",
+    "operationId": "getSmsLogs",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "page",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 1
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "SMS logs retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/account/balance": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Get Account Balance",
+    "description": "Retrieve current account balance and usage statistics. Balance is denominated in USD.",
+    "operationId": "getBalance",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Balance retrieved",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "balance": {
+           "type": "number",
+           "description": "Account balance in USD"
+          },
+          "currency": {
+           "type": "string",
+           "enum": [
+            "USD"
+           ]
+          },
+          "messagesRemaining": {
+           "type": "integer"
+          }
+         }
+        },
+        "example": {
+         "balance": 123.45,
+         "currency": "USD",
+         "messagesRemaining": 2469
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user/profile": {
+   "put": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Update Profile",
+    "description": "Update account profile information.",
+    "operationId": "updateProfile",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "email": {
+          "type": "string",
+          "format": "email"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Profile updated"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Get User Info",
+    "description": "Get authenticated user's profile information, including account status and available gateways.",
+    "operationId": "getUser",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "User info retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user/dashboard/stats": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Dashboard Stats",
+    "description": "Get dashboard statistics including sent counts, delivery rates, and spending.",
+    "operationId": "getDashboardStats",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Stats retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/prices": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Get Pricing",
+    "description": "Retrieve per-country SMS pricing. Returns the complete pricing grid, optionally filtered by country code.",
+    "operationId": "getPricing",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "ISO 3166-1 alpha-2 country code to filter by",
+      "example": "US"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Pricing retrieved",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "countries": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "code": {
+              "type": "string"
+             },
+             "name": {
+              "type": "string"
+             },
+             "price": {
+              "type": "number"
+             },
+             "currency": {
+              "type": "string",
+              "enum": [
+               "USD"
+              ]
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user/transactions": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Get Transactions",
+    "description": "Retrieve transaction history including top-ups, SMS costs, and refunds.",
+    "operationId": "getTransactions",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Transactions retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/orders": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Get Orders",
+    "description": "Retrieve order/payment history.",
+    "operationId": "getOrders",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Orders retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user/country/routes": {
+   "get": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Get Country Routes",
+    "description": "Get the routing configuration for the authenticated user per country.",
+    "operationId": "getCountryRoutes",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Routes retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Set Country Routes",
+    "description": "Set specific carrier route preferences per country.",
+    "operationId": "setCountryRoutes",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Routes updated"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "SMS"
+    ],
+    "summary": "Reset Country Routes",
+    "description": "Reset country routing to defaults.",
+    "operationId": "resetCountryRoutes",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Routes reset"
+     }
+    }
+   }
+  },
+  "/hlr/lookup": {
+   "post": {
+    "tags": [
+     "HLR"
+    ],
+    "summary": "HLR Lookup",
+    "description": "Perform a Home Location Register lookup to validate a phone number, identify the carrier, and determine if the number is active. Use before sending SMS to reduce costs from undeliverable messages.",
+    "operationId": "hlrLookup",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "phone"
+        ],
+        "properties": {
+         "phone": {
+          "type": "string",
+          "description": "Phone number in E.164 format"
+         }
+        }
+       },
+       "example": {
+        "phone": "+1234567890"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "HLR lookup completed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "phone": {
+           "type": "string"
+          },
+          "valid": {
+           "type": "boolean"
+          },
+          "carrier": {
+           "type": "string"
+          },
+          "country": {
+           "type": "string"
+          },
+          "type": {
+           "type": "string",
+           "enum": [
+            "mobile",
+            "landline",
+            "voip",
+            "unknown"
+           ]
+          },
+          "ported": {
+           "type": "boolean"
+          }
+         }
+        },
+        "example": {
+         "phone": "+1234567890",
+         "valid": true,
+         "carrier": "Verizon Wireless",
+         "country": "US",
+         "type": "mobile",
+         "ported": false
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Invalid phone number"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/hlr/lookup/bulk": {
+   "post": {
+    "tags": [
+     "HLR"
+    ],
+    "summary": "Bulk HLR Lookup",
+    "description": "Perform HLR lookups on multiple phone numbers in a single request. Max 10,000 numbers per batch.",
+    "operationId": "hlrLookupBulk",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "phone_numbers"
+        ],
+        "properties": {
+         "phone_numbers": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+           "type": "string"
+          }
+         }
+        }
+       },
+       "example": {
+        "phone_numbers": [
+         "+1234567890",
+         "+0987654321"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Bulk lookup completed"
+     },
+     "400": {
+      "description": "Invalid input"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/hlr/history": {
+   "get": {
+    "tags": [
+     "HLR"
+    ],
+    "summary": "HLR History",
+    "description": "Retrieve history of previous HLR lookups.",
+    "operationId": "hlrHistory",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "HLR history retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/user/notifications": {
+   "get": {
+    "tags": [
+     "Notifications"
+    ],
+    "summary": "Get Notifications",
+    "description": "Retrieve user notifications.",
+    "operationId": "getNotifications",
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Notifications retrieved"
+     },
+     "401": {
+      "description": "Unauthorized"
+     }
+    }
+   }
+  },
+  "/health": {
+   "get": {
+    "tags": [
+     "Account"
+    ],
+    "summary": "Health Check",
+    "description": "Simple health check endpoint.",
+    "operationId": "healthCheck",
+    "responses": {
+     "200": {
+      "description": "Service is healthy"
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "bearerAuth": {
+    "type": "http",
+    "scheme": "bearer",
+    "description": "API key obtained from the SMSRoute dashboard. Pass as `Authorization: Bearer YOUR_API_KEY`."
+   }
+  },
+  "schemas": {
+   "Error": {
+    "type": "object",
+    "required": [
+     "status",
+     "code",
+     "message"
+    ],
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "error"
+      ]
+     },
+     "code": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     },
+     "retry_after": {
+      "type": "integer",
+      "description": "Seconds until rate limit resets (only on 429)"
+     }
+    }
+   }
+  }
+ },
+ "x-webhooks": {
+  "deliveryReceipt": {
+   "post": {
+    "summary": "Delivery Receipt Webhook",
+    "description": "When you provide a `callback_url` in the send request, SMSRoute will POST delivery status updates to that URL. Expect a JSON body with the message ID, status, and delivery timestamp.",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "messageId": {
+          "type": "string"
+         },
+         "status": {
+          "type": "string",
+          "enum": [
+           "delivered",
+           "failed",
+           "expired",
+           "rejected"
+          ]
+         },
+         "deliveredAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+         },
+         "errorCode": {
+          "type": "string",
+          "nullable": true
+         },
+         "to": {
+          "type": "string"
+         },
+         "cost": {
+          "type": "number"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Acknowledge receipt with 200 OK"
+     }
+    }
+   }
+  }
+ }
+}
