@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
  "openapi": "3.0.3",
  "info": {
@@ -1099,3 +1100,88 @@
   }
  }
 }
+=======
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SMSRoute API",
+    "version": "1.0.0",
+    "description": "No-KYC SMS API with crypto billing. Official examples: https://github.com/SMSRoute-cc/smsroute-examples",
+    "contact": { "url": "https://smsroute.cc" }
+  },
+  "servers": [{ "url": "https://api.smsroute.cc" }],
+  "paths": {
+    "/sms/send": {
+      "post": {
+        "summary": "Send a single SMS",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["to", "from", "body"],
+                "properties": {
+                  "to": { "type": "string", "example": "+14155550123" },
+                  "from": { "type": "string", "example": "INFO" },
+                  "body": { "type": "string", "example": "Your code is 482913" },
+                  "status_callback": { "type": "string", "format": "uri" },
+                  "reference": { "type": "string" },
+                  "validity_period": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Accepted" } }
+      }
+    },
+    "/sms/send/bulk": {
+      "post": {
+        "summary": "Bulk send (≤1000)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Accepted" } }
+      }
+    },
+    "/sms/single/{messageId}/status": {
+      "get": {
+        "summary": "Message status",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Status" } }
+      }
+    },
+    "/account/balance": {
+      "get": {
+        "summary": "Account balance",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Balance" } }
+      }
+    },
+    "/prices": {
+      "get": {
+        "summary": "Pricing grid",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Prices" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key"
+      }
+    }
+  }
+}
+>>>>>>> 3ee0744 (feat: hard-fill examples + canonical API fields (body/from) + openapi)
