@@ -1,157 +1,80 @@
-# SMSRoute — No-KYC SMS API Code Examples
+# Send an SMS from code — curl, Python, Node and PHP examples
 
-Copy-paste code to send SMS via a **no-KYC SMS API** with **crypto billing** (BTC / ETH / USDT).  
-Twilio-style REST without card KYC or 10DLC onboarding theater. **149 countries · from $0.004/SMS · $5 free credits.**
+A no-KYC SMS API issues you a key after an email-only signup, with no identity document and no company
+registration, and bills in cryptocurrency instead of a card. This repository contains working examples
+for sending one message, reading a delivery receipt, and handling the errors you will actually hit.
 
-**Target queries:** `no kyc sms api` · `sms api crypto` · `twilio alternative` · `otp verification api` · `send sms programmatically`
+Last verified: 2026-10-29.
 
-Get an API key: [smsroute.cc/register](https://sendsmsnokyc.com/register) · Docs: [smsroute.cc/developers](https://sendsmsnokyc.com/developers) · Pricing: [smsroute.cc/prices](https://sendsmsnokyc.com/prices)
+## What you need
 
-## Quick Start (cURL)
+- An API key (email signup, no documents)
+- A funded balance — top-ups start at $5, paid in BTC, ETH, USDT or XMR
+- The destination number in E.164 format, e.g. `+4915112345678`
+
+## Quick start (curl)
 
 ```bash
-export SMSROUTE_API_KEY=your_key_here
+export SMS_API_KEY="your_key_here"
 
-curl -X POST https://api.sendsmsnokyc.com/sms/send \
-  -H "Authorization: Bearer $SMSROUTE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: demo-$(date +%s)" \
-  -d '{
-    "to": "+14155550123",
-    "from": "INFO",
-    "body": "Your code is 482913"
-  }'
+curl -X POST https://api.sendsmsnokyc.com/sms/send   -H "Authorization: Bearer $SMS_API_KEY"   -H "Content-Type: application/json"   -d '{"to":"+4915112345678","from":"MyBrand","body":"Hello from the API"}'
 ```
 
-## Python
+A successful call returns a message id. Delivery is asynchronous — poll or receive a webhook.
 
-```python
-import os, requests
+## Endpoints
 
-r = requests.post(
-    "https://api.sendsmsnokyc.com/sms/send",
-    headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
-    json={
-        "to": "+14155550123",
-        "from": "INFO",
-        "body": "Your code is 482913",
-    },
-    timeout=15,
-)
-print(r.status_code, r.json())
-```
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/sms/send` | Send one message |
+| GET | `/sms/{id}` | Fetch delivery status |
+| GET | `/balance` | Remaining credit |
 
-See `python/` for OTP flow, balance check, and DLR webhook handler.
+## Examples by language
 
-## Node.js
+| Language | File |
+|---|---|
+| cURL | `curl/send.sh` |
+| Python | `python/send_sms.py` |
+| Node.js | `node/send_sms.js` |
+| PHP | `php/send_sms.php` |
+| Go | `go/main.go` |
 
-```javascript
-const res = await fetch("https://api.sendsmsnokyc.com/sms/send", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.SMSROUTE_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    to: "+14155550123",
-    from: "INFO",
-    body: "Your code is 482913",
-  }),
-});
-console.log(await res.json());
-```
+## Error codes
 
-See `node/` for Telegram bot SMS notifier and Express OTP endpoint.
+| Code | Meaning | What to do |
+|---|---|---|
+| 400 | Malformed number or body | Check E.164 formatting |
+| 401 | Missing or invalid key | Re-issue the key |
+| 402 | Insufficient balance | Top up |
+| 429 | Rate limited | Back off and retry |
+| 5xx | Provider-side failure | Retry with backoff; failed sends are not billed |
 
-## PHP
+## Pricing
 
-```php
-<?php
-$ch = curl_init("https://api.sendsmsnokyc.com/sms/send");
-curl_setopt_array($ch, [
-    CURLOPT_POST => true,
-    CURLOPT_HTTPHEADER => [
-        "Authorization: Bearer " . getenv("SMSROUTE_API_KEY"),
-        "Content-Type: application/json",
-    ],
-    CURLOPT_POSTFIELDS => json_encode([
-        "to" => "+14155550123",
-        "from" => "INFO",
-        "body" => "Your code is 482913",
-    ]),
-    CURLOPT_RETURNTRANSFER => true,
-]);
-echo curl_exec($ch);
-```
+| Destination | Price per one-part SMS |
+|---|---|
+| United States | from $0.0079 |
+| United Kingdom | from $0.0380 |
+| Germany | from $0.0410 |
+| India | from $0.0040 |
 
-Full file: `php/send_sms.php`.
+Full per-country table: https://sendsmsnokyc.com/prices
 
-## Go
+## FAQ
 
-```go
-// see go/send_sms.go
-```
+### Do I need to register a company?
+No. Signup requires an email address. Destination-country rules (10DLC in the US, DLT in India,
+sender-ID pre-registration in parts of the EU) still apply to the traffic itself.
 
-## Migrate from Twilio (5-line mental model)
+### Can I send without a phone number?
+Yes. You send from a sender ID or shared route. Receiving replies requires a number, which is a
+different product.
 
-| Twilio | SMSRoute |
-|--------|----------|
-| Account SID + Auth Token | `Authorization: Bearer API_KEY` |
-| `Body` | `body` |
-| `From` / Messaging Service | `from` (3–11 alphanumeric where allowed) |
-| Card + KYC + 10DLC | Email signup + crypto top-up |
-| `StatusCallback` | `status_callback` |
+### How do delivery receipts work?
+Either poll `GET /sms/{id}` or configure a webhook. A receipt means the handset acknowledged the
+message, not that a human read it.
 
-Side-by-side: `twilio_migrate/curl_compare.sh`
+## Licence
 
-## Why SMSRoute (honest table)
-
-| Feature | SMSRoute | Typical CPaaS (Twilio-class) |
-|---------|----------|------------------------------|
-| Signup KYC | Email-only | ID + business docs common |
-| Billing | BTC / ETH / USDT (+ site rails) | Card / invoice |
-| Floor price | From **$0.004**/SMS (route-dependent) | Higher + fees |
-| Coverage | **149** countries | Broad, enterprise packaging |
-| Free start | **$5** credits | Trial varies |
-| Best for | OTP / transactional / crypto-native ops | Full omnichannel suites |
-
-US domestic can be *less* competitive than Twilio at scale — international + crypto rails are the wedge. Always test your routes.
-
-## Repo map
-
-| Path | Intent keyword |
-|------|----------------|
-| `curl/send.sh` | send sms api |
-| `python/send_sms.py` | python sms api |
-| `python/otp_verify.py` | otp verification |
-| `python/balance.py` | account balance |
-| `python/dlr_webhook.py` | delivery receipt webhook |
-| `node/send.js` | node sms api |
-| `node/telegram-bot-sms.js` | telegram bot sms |
-| `node/express_otp.js` | otp endpoint |
-| `php/send_sms.php` | php sms api |
-| `go/send_sms.go` | go sms api |
-| `twilio_migrate/` | twilio alternative |
-| `openapi.json` | machine-readable API |
-
-## API surface (canonical)
-
-Base: `https://api.sendsmsnokyc.com`
-
-- `POST /sms/send` — `{to, from, body, status_callback?, reference?, validity_period?}`
-- `POST /sms/send/bulk` — batch ≤1000
-- `GET /sms/single/{messageId}/status`
-- `GET /account/balance`
-- `GET /prices` · `GET /prices?country=US` · `GET /prices/lookup?to=+1...`
-
-## Crypto top-up
-
-Fund in the dashboard with **BTC / ETH / USDT**, then spend prepaid balance. No card required for the core loop.
-
-## Security
-
-See `SECURITY.md`. Do not commit API keys. Prefer env vars + short-lived server-side sends.
-
-## License
-
-MIT — official examples for [smsroute.cc](https://sendsmsnokyc.com). Issues welcome.
+MIT — see LICENSE.
