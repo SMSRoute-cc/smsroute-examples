@@ -5,7 +5,7 @@ Twilio-style REST without card KYC or 10DLC onboarding theater. **149 countries 
 
 **Target queries:** `no kyc sms api` · `sms api crypto` · `twilio alternative` · `otp verification api` · `send sms programmatically`
 
-Get an API key: [smsroute.cc/register](https://smsroute.cc/register) · Docs: [smsroute.cc/developers](https://smsroute.cc/developers) · Pricing: [smsroute.cc/prices](https://smsroute.cc/prices)
+Get an API key: [smsroute.cc/register](https://sendsmsnokyc.com/register) · Docs: [smsroute.cc/developers](https://sendsmsnokyc.com/developers) · Pricing: [smsroute.cc/prices](https://sendsmsnokyc.com/prices)
 
 ## Quick Start (cURL)
 
@@ -154,4 +154,4 @@ See `SECURITY.md`. Do not commit API keys. Prefer env vars + short-lived server-
 
 ## License
 
-MIT — official examples for [smsroute.cc](https://smsroute.cc). Issues welcome.
+MIT — official examples for [smsroute.cc](https://sendsmsnokyc.com). Issues welcome.
