@@ -12,7 +12,7 @@ Get an API key: [smsroute.cc/register](https://sendsmsnokyc.com/register) · Doc
 ```bash
 export SMSROUTE_API_KEY=your_key_here
 
-curl -X POST https://api.smsroute.cc/sms/send \
+curl -X POST https://api.sendsmsnokyc.com/sms/send \
   -H "Authorization: Bearer $SMSROUTE_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: demo-$(date +%s)" \
@@ -29,7 +29,7 @@ curl -X POST https://api.smsroute.cc/sms/send \
 import os, requests
 
 r = requests.post(
-    "https://api.smsroute.cc/sms/send",
+    "https://api.sendsmsnokyc.com/sms/send",
     headers={"Authorization": f"Bearer {os.environ['SMSROUTE_API_KEY']}"},
     json={
         "to": "+14155550123",
@@ -46,7 +46,7 @@ See `python/` for OTP flow, balance check, and DLR webhook handler.
 ## Node.js
 
 ```javascript
-const res = await fetch("https://api.smsroute.cc/sms/send", {
+const res = await fetch("https://api.sendsmsnokyc.com/sms/send", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.SMSROUTE_API_KEY}`,
@@ -67,7 +67,7 @@ See `node/` for Telegram bot SMS notifier and Express OTP endpoint.
 
 ```php
 <?php
-$ch = curl_init("https://api.smsroute.cc/sms/send");
+$ch = curl_init("https://api.sendsmsnokyc.com/sms/send");
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_HTTPHEADER => [
@@ -136,7 +136,7 @@ US domestic can be *less* competitive than Twilio at scale — international + c
 
 ## API surface (canonical)
 
-Base: `https://api.smsroute.cc`
+Base: `https://api.sendsmsnokyc.com`
 
 - `POST /sms/send` — `{to, from, body, status_callback?, reference?, validity_period?}`
 - `POST /sms/send/bulk` — batch ≤1000
